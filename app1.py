@@ -4,23 +4,18 @@ from ultralytics import YOLO
 import binascii
 import serial
 
-
 ser = serial.Serial("\\\\.\\COM18", 115200)
 if not ser.isOpen():
     ser.open()
-    user_reloader= False
-print('COM Port 18 open', ser.isOpen())
 
-print(ser)
 app = Flask(__name__)
-
 model = YOLO("model_files/best.pt")
 
 def hex_to_img(input_file):
+    output_image_paths = []
     with open(input_file, "r") as f:
         hex_codes = f.readlines()
 
-    output_image_paths = []
     for i, hex_code in enumerate(hex_codes):
         hex_code = hex_code.strip()
         binary_data = binascii.a2b_hex(bytes(hex_code, "ascii"))
@@ -50,7 +45,6 @@ def detect_potholes():
             output_image_path = os.path.join(output_dir, 'annotated_image.jpg')
             results.save(output_image_path)
             annotated_image_data.append({'path': output_image_path, 'label': 'pothole' if len(results) > 0 else 'no pothole', 'predictions': results.names if len(results) > 0 else []})
-        print(jsonify({'annotated_images': annotated_image_data}))
         return jsonify({'annotated_images': annotated_image_data})
     elif 'text' in request.files:
         text_file = request.files['text']
@@ -77,4 +71,3 @@ def detect_potholes():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', use_reloader=False, port=5000, debug=True)
-    
