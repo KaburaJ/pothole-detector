@@ -40,13 +40,11 @@ def detect_potholes():
         hex_data += line
         
     print(hex_data)
-    print("Running")
     ser.close()
-    print("stopped")
+    print("Hex data stopped")
 
     image = hex_to_img(hex_data)
     results = model(image)
-    print(results)
 
     output_dir = 'output_images'
     os.makedirs(output_dir, exist_ok=True)
@@ -62,8 +60,13 @@ def detect_potholes():
         annotated_image_data = [{'path': output_image_path, 'label': 'pothole' if len(results) > 0 else 'no pothole', 'predictions': results.names if len(results) > 0 else []}]
 
     label = [data['label'] for data in annotated_image_data]
-    print("label: ", label)
-    ser.write(label)
+    print("model class result", label)
+    
+    if label == "pothole": 
+       ser.write("1")
+    elif label == "no pothole": {
+       ser.write("0")
+    }
     return annotated_image_data
 
 detect_potholes()
