@@ -1,0 +1,6 @@
+
+train: ../pothole-detection-dataset/train/images
+val: ../pothole-detection-dataset/valid/images
+
+nc: 1
+names: ['pothole']
