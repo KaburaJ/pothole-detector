@@ -4,14 +4,12 @@ from ultralytics import YOLO
 import binascii
 import serial
 
-
-ser = serial.Serial("\\\\.\\COM18", 9600)
+ser = serial.Serial("\\\\.\\COM12", 19200)
 if not ser.isOpen():
     ser.open()
-    user_reloader= False
-print('COM Port 18 open', ser.isOpen())
+user_reloader= False
+print('COM Port open', ser.isOpen())
 
-print(ser)
 app = Flask(__name__)
 
 model = YOLO("model_files/best.pt")
@@ -31,27 +29,14 @@ def hex_to_img(input_file):
     
     return output_image_paths
 
-@app.route('/detect_potholes', methods=['POST'])
+def update_txt_with_hex(hex_code):
+    with open("received_hex.txt", "a") as f:
+        f.write(hex_code + "\n")
+
+@app.route('/', methods=['POST'])
 def detect_potholes():
     if 'image' in request.files:
-        image_file = request.files['image']
-        temp_image_path = 'output_images/temp_image.jpg'
-        image_file.save(temp_image_path)
-        results = model(temp_image_path)
-        output_dir = 'output_images'
-        os.makedirs(output_dir, exist_ok=True)
-        annotated_image_data = []
-        if isinstance(results, list):
-            for i, detections in enumerate(results):
-                output_image_path = os.path.join(output_dir, f'annotated_image_{i}.jpg')
-                detections.save(output_image_path)
-                annotated_image_data.append({'path': output_image_path, 'label': 'pothole' if len(detections) > 0 else 'no pothole', 'predictions': detections.names if len(detections) > 0 else []})
-        else:
-            output_image_path = os.path.join(output_dir, 'annotated_image.jpg')
-            results.save(output_image_path)
-            annotated_image_data.append({'path': output_image_path, 'label': 'pothole' if len(results) > 0 else 'no pothole', 'predictions': results.names if len(results) > 0 else []})
-        print(jsonify({'annotated_images': annotated_image_data}))
-        return jsonify({'annotated_images': annotated_image_data})
+        pass
     elif 'text' in request.files:
         text_file = request.files['text']
         temp_text_path = 'temp_text.txt'
@@ -75,6 +60,14 @@ def detect_potholes():
     else:
         return jsonify({'error': 'Invalid request. Must contain either an image file or a text file.'}), 400
 
+@app.route('/receive-hex', methods=['POST'])
+def receive_hex():
+    if 'hex_code' in request.form:
+        hex_code = request.form['hex_code']
+        update_txt_with_hex(hex_code)
+        return jsonify({'status': 'Hex code received and updated successfully'})
+    else:
+        return jsonify({'error': 'Invalid request. Must contain a hex code.'}), 400
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', use_reloader=False, port=5000, debug=True)
-    

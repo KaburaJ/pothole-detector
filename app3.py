@@ -2,11 +2,24 @@ from flask import Flask, request, jsonify
 import os
 from ultralytics import YOLO
 import binascii
+
+# ser = serial.Serial("\\\\.\\COM12", 19200)
+# if not ser.isOpen():
+#     ser.open()
+
 import serial
 
-ser = serial.Serial("\\\\.\\COM14", 19200)
-if not ser.isOpen():
-    ser.open()
+ser = serial.Serial()
+ser.port = 'COM12'
+ser.baudrate = 19200
+ser.setDTR(False)
+ser.setRTS(False)
+
+ser.open()
+ser.write(b'START\n')
+while True:
+    b = ser.readline()
+    print(b)
 
 app = Flask(__name__)
 model = YOLO("model_files/best.pt")
